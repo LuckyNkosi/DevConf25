@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU API Demo - Basic Clear</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f0f0f0; }
+        #webgpu-canvas { display: block; margin: 20px auto; background-color: #fff; }
+        .output { margin-top: 10px; padding:10px; border: 1px solid #ccc; background-color: #f9f9f9; min-height: 30px; }
+    </style>
+</head>
+<body>
+    <h1>WebGPU API Demo - Basic Clear</h1>
+    <p>
+        This demo initializes WebGPU and clears the canvas to a solid color.
+        If you see a colored square below, WebGPU is working!
+    </p>
+    <canvas id="webgpu-canvas" width="640" height="480"></canvas>
+    <div class="output" id="statusMessages">
+        Status messages will appear here.
+    </div>
+
+    <script src="demo.js"></script>
+</body>
+</html>

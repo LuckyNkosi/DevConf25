@@ -24,6 +24,7 @@ This talk is targeted at web developers, technical leads, and product designers 
 ## How to Use
 
 Each directory contains a specific demo. Navigate into the directory and open the `index.html` file in a modern web browser that supports the respective API. Check the browser's developer console for any specific instructions or output.
+Updated now
 
 ---
 

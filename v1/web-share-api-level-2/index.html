@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Share API Level 2 - File Share Demo</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        button { margin: 10px 5px; padding: 10px; }
+        .output { margin-top: 10px; padding:10px; border: 1px solid #ccc; background-color: #f9f9f9; min-height: 30px; }
+        #fileToShareDetails { margin-bottom: 15px; padding: 10px; background-color: #e9e9e9; border-radius: 4px;}
+    </style>
+</head>
+<body>
+    <h1>Web Share API Level 2 - File Share Demo</h1>
+    <p>
+        This demo shows how to share a file using the Web Share API.
+        Click the button below to attempt to share a pre-defined text file.
+    </p>
+
+    <div id="fileToShareDetails">
+        <strong>File to share:</strong> <code>demo-file.txt</code> (will be generated on the fly)
+        <br>
+        <strong>Content:</strong> "Hello from the Web Share API Level 2 demo!"
+    </div>
+
+    <button id="btnShareFile">Share Demo File</button>
+    <input type="file" id="filePicker" style="display: none;">
+    <button id="btnSharePickedFile">Pick & Share File</button>
+
+
+    <div class="output" id="statusMessages">
+        Status messages will appear here.
+    </div>
+
+    <script src="demo.js"></script>
+</body>
+</html>

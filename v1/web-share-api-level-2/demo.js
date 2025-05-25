@@ -1,6 +1,7 @@
 // Web Share API Level 2 - File Share Demo (demo.js)
 
 const btnShareFile = document.getElementById('btnShareFile');
+const btnPickFileToShare = document.getElementById('btnPickFileToShare');
 const btnSharePickedFile = document.getElementById('btnSharePickedFile');
 const filePicker = document.getElementById('filePicker');
 const statusMessages = document.getElementById('statusMessages');
@@ -9,6 +10,7 @@ const DEMO_FILENAME = 'demo-file.txt';
 const DEMO_FILE_CONTENT = 'Hello from the Web Share API Level 2 demo!';
 const DEMO_FILE_TYPE = 'text/plain';
 
+let pickedFile = null;
 function logStatus(message, isError = false) {
     console.log(message);
     statusMessages.textContent = message;
@@ -28,10 +30,11 @@ if (navigator.share && navigator.canShare) {
 }
 
 btnShareFile.addEventListener('click', async () => {
-    const filesArray = [demoFile];
+    const filesArray = pickedFile ? [pickedFile] : [demoFile];
+    const filedName = pickedFile ? pickedFile.name : DEMO_FILENAME;
     const shareData = {
         title: 'Share Demo File',
-        text: `Check out this file: ${DEMO_FILENAME}`,
+        text: `Check out this file: ${filedName}`,
         files: filesArray,
     };
 
@@ -39,7 +42,7 @@ btnShareFile.addEventListener('click', async () => {
         logStatus(`Attempting to share "${DEMO_FILENAME}"...`);
         try {
             await navigator.share(shareData);
-            logStatus(`"${DEMO_FILENAME}" shared successfully or share dialog opened.`);
+            logStatus(`"${filedName}" shared successfully or share dialog opened.`);
         } catch (err) {
             logStatus(`Error sharing file: ${err.name} - ${err.message}`, true);
             console.error('Share error:', err);
@@ -57,7 +60,7 @@ btnShareFile.addEventListener('click', async () => {
     }
 });
 
-btnSharePickedFile.addEventListener('click', () => {
+btnPickFileToShare.addEventListener('click', () => {
     filePicker.click(); // Open file picker
 });
 
@@ -68,37 +71,43 @@ filePicker.addEventListener('change', async (event) => {
         return;
     }
     const fileToShare = files[0];
+    pickedFile = fileToShare; // Store the selected file for sharing later
     logStatus(`File selected: ${fileToShare.name}`);
 
-    const shareData = {
-        title: `Share ${fileToShare.name}`,
-        text: `Check out this file: ${fileToShare.name}`,
-        files: [fileToShare],
-    };
-
-    if (navigator.canShare && navigator.canShare(shareData)) {
-        logStatus(`Attempting to share "${fileToShare.name}"...`);
-        try {
-            await navigator.share(shareData);
-            logStatus(`"${fileToShare.name}" shared successfully or share dialog opened.`);
-        } catch (err) {
-            logStatus(`Error sharing file: ${err.name} - ${err.message}`, true);
-            console.error('Share error:', err);
-             if (err.name === 'AbortError') {
-                logStatus('Share aborted by the user.', false);
-            }
-        }
-    } else {
-        logStatus(`Sharing file "${fileToShare.name}" is not supported or data is invalid.`, true);
-        console.warn('navigator.canShare returned false for picked file. Share data:', shareData);
-         if (!navigator.canShare({files: [fileToShare]})) {
-            console.warn('navigator.canShare({files: [fileToShare]}) is false. File might be too large, wrong type, or other restrictions.');
-        }
-    }
     // Reset file picker for next selection
     filePicker.value = '';
 });
 
+//share the picked file
+btnSharePickedFile.addEventListener('click', async () => {
+    if (!pickedFile) {
+        logStatus('No file selected to share.', true);
+        return;
+    }
+
+    const shareData = {
+        title: `Share ${pickedFile.name}`,
+        text: `Check out this file: ${pickedFile.name}`,
+        files: [pickedFile],
+    };
+
+    if (navigator.canShare && navigator.canShare(shareData)) {
+        logStatus(`Attempting to share "${pickedFile.name}"...`);
+        try {
+            await navigator.share(shareData);
+            logStatus(`"${pickedFile.name}" shared successfully or share dialog opened.`);
+        } catch (err) {
+            logStatus(`Error sharing file: ${err.name} - ${err.message}`, true);
+            console.error('Share error:', err);
+            if (err.name === 'AbortError') {
+                logStatus('Share aborted by the user.', false);
+            }
+        }
+    } else {
+        logStatus('Sharing this file is not supported by the browser/OS or data is invalid.', true);
+        console.warn('navigator.canShare returned false. Share data:', shareData);
+    }
+});
 
 // Initial check for file sharing capability
 if (navigator.canShare && !navigator.canShare({ files: [demoFile] })) {

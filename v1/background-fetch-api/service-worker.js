@@ -24,13 +24,13 @@ self.addEventListener('backgroundfetchsuccess', (event) => {
             console.log(`Service Worker: Background fetch '${bgFetch.id}' successful. Records:`, records);
 
             // Example: Storing in Cache API (optional, adapt as needed)
-            // const cache = await caches.open(bgFetch.id);
-            // for (const record of records) {
-            //     if (record.response && record.response.ok) {
-            //         await cache.put(record.request, record.response.clone());
-            //     }
-            // }
-            // console.log(`Service Worker: Responses for '${bgFetch.id}' stored in cache.`);
+            const cache = await caches.open(bgFetch.id);
+            for (const record of records) {
+                if (record.response && record.response.ok) {
+                    await cache.put(record.request, record.response.clone());
+                }
+            }
+            console.log(`Service Worker: Responses for '${bgFetch.id}' stored in cache.`);
 
 
             // Notify the client page(s) that the fetch is complete and records are available.

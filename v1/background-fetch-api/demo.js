@@ -13,10 +13,11 @@ const FETCH_ID = 'my-background-fetch';
 // IMPORTANT: For a real demo, use a file that is appropriately sized and CORS-enabled if from a different origin.
 // You might need to host a sample file yourself.
 const FILE_TO_DOWNLOAD_URL = 'https://jsonplaceholder.typicode.com/photos'; // Example large JSON
+// const FILE_TO_DOWNLOAD_URL = 'https://countriesnow.space/api/v0.1/countries/population/cities'; // Example large JSON
 const FILE_ID = 'downloaded-photos.json';
 
 function logStatus(message) {
-    console.log(message);
+    console.log(message, new Date().toLocaleTimeString());
     statusMessages.innerHTML = message; // Use innerHTML if you want to include HTML like <br>
 }
 
@@ -48,7 +49,7 @@ btnStartFetch.addEventListener('click', async () => {
         return;
     }
 
-    if (!('BackgroundFetchManager' in swRegistration)) {
+    if (!('backgroundFetch' in swRegistration)) {
         logStatus('Background Fetch API is not supported in this browser or service worker.');
         return;
     }
@@ -106,6 +107,7 @@ function attachToFetch(bgFetchRegistration) {
             btnStartFetch.disabled = false;
             btnAbortFetch.disabled = true;
         }
+        console.log(`Message from service worker: ${event.data.message}`, new Date().toLocaleTimeString());
     });
 }
 
@@ -128,6 +130,8 @@ function updateProgressUI(bgFetchRegistration) {
 
     if (bgFetchRegistration.result === 'success') {
         logStatus('Download finished successfully (client-side check).');
+            showDownloadedContent(bgFetchRegistration);
+
         fetchProgress.value = 100;
         // The 'backgroundfetchsuccess' event in SW is more reliable for completion.
     } else if (bgFetchRegistration.result === 'failure') {
@@ -171,10 +175,14 @@ async function showDownloadedContent(bgFetchRegistration) {
             logStatus('No records found for this background fetch.');
             return;
         }
-
+        console.log(`Found ${records.length} records for background fetch ${bgFetchRegistration.id}.`, records);
+        
         const firstRecord = records[0]; // Assuming one file for this demo
-        if (firstRecord.response) {
-            const response = firstRecord.response;
+        if (firstRecord.responseReady) {
+            const response = await firstRecord.responseReady;
+            console.log(`Response ready for record: ${firstRecord.request.url}`, response);
+            
+            // await cache.put (firstRecord.request, response.clone()); // Store in cache if needed
             if (response.ok) {
                 const blob = await response.blob();
                 logStatus(`Content retrieved. Blob type: ${blob.type}, size: ${blob.size} bytes.`);
@@ -189,6 +197,16 @@ async function showDownloadedContent(bgFetchRegistration) {
                     contentPreview.textContent = `Cannot display preview for blob type: ${blob.type}. File is available.`;
                     downloadedContentPreview.style.display = 'block';
                 }
+
+                // Save the blob to IndexedDB
+                try {
+                    await saveBlobToIndexedDB(FILE_ID, blob);
+                    logStatus(`File saved to IndexedDB with key: ${FILE_ID}`);
+                } catch (error) {
+                    logStatus(`Error saving to IndexedDB: ${error}`);
+                    console.error('IndexedDB save error:', error);
+                }
+
                 // In a real app, you'd save this blob to IndexedDB, Cache API, or offer for download.
                 // e.g., const url = URL.createObjectURL(blob);
                 // const a = document.createElement('a');
@@ -209,6 +227,54 @@ async function showDownloadedContent(bgFetchRegistration) {
         logStatus(`Error accessing downloaded content: ${error}`);
         console.error(error);
     }
+}
+
+// Function to save blob to IndexedDB
+function saveBlobToIndexedDB(key, blob) {
+    return new Promise((resolve, reject) => {
+        const dbName = 'backgroundFetchDemoDB';
+        const storeName = 'downloadedFiles';
+        const request = indexedDB.open(dbName, 1);
+
+        request.onerror = (event) => {
+            console.error('IndexedDB open error:', event.target.error);
+            reject(event.target.error);
+        };
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            const objectStore = db.createObjectStore(storeName, { keyPath: 'id' });
+            console.log('IndexedDB object store created:', objectStore.name);
+        };
+
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction([storeName], 'readwrite');
+            const objectStore = transaction.objectStore(storeName);
+
+            const putRequest = objectStore.put({ id: key, data: blob });
+
+            putRequest.onsuccess = () => {
+                console.log(`Blob saved to IndexedDB with key: ${key}`);
+                resolve();
+            };
+
+            putRequest.onerror = (event) => {
+                console.error('IndexedDB put error:', event.target.error);
+                reject(event.target.error);
+            };
+
+            transaction.oncomplete = () => {
+                db.close();
+            };
+
+            transaction.onerror = (event) => {
+                console.error('IndexedDB transaction error:', event.target.error);
+                reject(event.target.error);
+                db.close();
+            };
+        };
+    });
 }
 
 
